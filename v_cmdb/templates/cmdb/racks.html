@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+{% block content %}
+
+{% include 'cmdb/modal_racks.html' %}
+
+<section class="content-header">
+        <div>
+             <ol class="breadcrumb">
+                 <li><a href="/cmdb/dashboard/"><i class="fa fa-dashboard"></i> Dashboard</a></li>
+                 <li class="active">机柜</li>
+             </ol>
+        </div>
+</section>
+
+<div style="margin-bottom: 20px" class="col-md-12">
+    <p></p>
+    <div class="col-md-4">
+    <button id='btn-create' class="btn btn-primary">新增</button>
+    </div>
+
+    <div class="col-md-4">
+            <div class="input-group">
+                <input id="search" type="text" class="form-control" placeholder="机柜名或编号或U型">
+                <span class="input-group-btn">
+                    <button id="search_btn" class="btn btn-default" type="button">搜索</button>
+                </span>
+            </div>
+    </div>
+</div>
+
+    <div class="row">
+        <div class="col-md-6">
+        <table class="table table-striped">
+            <thead>
+                <td>ID</td>
+                <td>机柜名</td>
+                <td>所属机房</td>
+                <td>编号</td>
+                <td>U型</td>
+                <td>备注</td>
+                <td>操作</td>
+            </thead>
+            <tbody>
+                {% for obj in paginator_data.object_list %}
+                    <tr>
+                        <td><a href="/cmdb/racks/{{ obj.id }}">{{ obj.id }}</a> </td>
+                        <td>{{ obj.name }} </td>
+                        <td>{{ obj.idc.name }}</td>
+                        <td>{{ obj.number }} </td>
+                        <td>{{ obj.size }} </td>
+                        <td>{{ obj.remark }} </td>
+                        <td>
+                            <button class="btn btn-danger btn_delete" obj-id="{{ obj.id }}" >删除</button>
+                            <button class="btn btn-default btn-put" obj-id="{{ obj.id }}">修改</button>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    </div>
+
+
+<div>
+    {%  if paginator_data.has_previous %}
+        <a class="paginator" href="?page={{ paginator_data.previous_page_number }}&search={{ search }}"><span>上一页</span></a>
+    {%  endif %}
+
+    {% for page in paginator_data.paginator.page_range %}
+        {% if paginator_data.number == page %}
+            <span id="current_page" >{{ page }}</span>
+        {% else %}
+            <a class="paginator" href="?page={{ page }}&search={{ search }}" title="{{ page }}"><span>{{ page }}</span></a>
+        {% endif %}
+    {% endfor %}
+    {% if paginator_data.has_next %}
+        <a class="paginator" href="?page={{ paginator_data.next_page_number }}&search={{ search }}"><span>下一页</span></a>
+    {% endif %}
+
+</div>
+
+<script>
+    //给create_idc_id,edit_idc_id赋option
+    $.ajax({
+            type: 'GET',
+            url: '/cmdb/api_idcs/',
+            data: {},
+            dataType: "json",
+            success: function(result){
+                data = result.data
+                option='<option> </option>'
+                $('#create_idc_id').append(option)
+                for (idc of data){
+                    option = '<option id=' + idc.id + '>' + idc.name + '</option>'
+                    $('#create_idc_id').append(option)
+                    $('#edit_idc_id').append(option)
+                }
+            },
+            error: function(){
+
+            },
+         })
+    //点击创建，弹出模态框
+    $('#btn-create').click(function () {
+        $('#create_modal').modal()
+    })
+    //点击模态框提交按钮，发送数据到后端
+    $('#create_btn').click(function () {
+        var name = $('#create_name').val()
+        var idc_id=$('#create_idc_id option:selected').attr('id')
+        var number = $('#create_number').val()
+        var size = $('#create_size').val()
+        var remark = $('#create_remark').val()
+        var data = {idc_id:idc_id,name:name,number:number,size:size,remark:remark}
+
+        $.ajax({
+            type: 'POST',
+            url: '/cmdb/racks/',
+            data: data,  // 前端传给后端的数据
+            dataType: "json",
+            success: function(result){
+                console.log(result)
+                location.reload()
+            },
+            error: function(){
+            },
+         })
+    })
+    //点击修改，弹出模态框，并发送IDC数据和rack数据到前端，
+    $('.btn-put').click(function () {
+        $('#edit_modal').modal()
+        id = $(this).attr('obj-id')
+        $.ajax({
+            type: 'GET',
+            url: '/cmdb/api_racks/'+id,
+            data: {},  // 前端传给后端的数据
+            dataType: "json",
+            success: function(result){
+                console.log(result)
+                idc_name = result.idc.name
+                name = result.name
+                number = result.number
+                size = result.size
+                remark = result.remark
+                $('#edit_idc_id').attr('value',idc_name)
+                $('#edit_id').val(id)
+                $('#edit_name').val(name)
+                $('#edit_number').val(number)
+                $('#edit_size').val(size)
+                $('#edit_remark').val(remark)
+            },
+            error: function(){
+            },
+         })
+    })
+    //点击提交，发送数据到后端
+    $('#edit_btn').click(function () {
+        name = $('#edit_name').val()
+        number = $('#edit_number').val()
+        size = $('#edit_size').val()
+        remark = $('#edit_remark').val()
+        id = $('#edit_id').val()
+        idc_id = $('#edit_idc_id option:selected').attr('id')
+        data = {idc_id:idc_id,name:name,number:number,size:size,remark:remark}
+
+        $.ajax({
+            type: 'PUT',
+            url: '/cmdb/racks/'+id,
+            data: data,  // 前端传给后端的数据
+            dataType: "json",
+            success: function(result){
+                console.log(result)
+                location.reload()
+
+            },
+            error: function(){
+
+            },
+         })
+    })
+
+    //点击删除
+    $('.btn_delete').click(function () {
+        id = $(this).attr('obj-id')
+        data = {}
+        $.ajax({
+            type: 'DELETE',
+            url: '/cmdb/racks/'+id,
+            data: data,  // 前端传给后端的数据
+            dataType: "json",
+            success: function(result){
+                console.log(result)
+                location.reload()
+
+            },
+            error: function(){
+
+            },
+         })
+    })
+
+
+
+    $('#search_btn').click(function () {
+            var search = $('#search').val()
+            window.location.href = "/cmdb/racks/?search=" + search
+    })
+</script>
+
+{% endblock %}

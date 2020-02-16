@@ -1,0 +1,65 @@
+<!-- 模态框（Modal） -->
+<div class="modal fade" id="create_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                <h4 class="modal-title" id="myModalLabel">
+                    创建虚拟机
+                </h4>
+            </div>
+            <div class="modal-body">
+                <p>选择宿主机：
+                    <select class="form-control"  style="width: 200px" id="create_server_id" >
+                    </select>
+                </p>
+                <p>主机名：<input class="form-control"  style="width: 200px" type="text" id="create_name" value=""></p>
+                <p>CPU：   <input class="form-control"  style="width: 200px" type="text" id="create_cpu" value=""></p>
+                <p>内存：   <input class="form-control"  style="width: 200px" type="text" id="create_memory" value=""></p>
+                <p>磁盘：   <input class="form-control"  style="width: 200px" type="text" id="create_disk" value=""></p>
+                <p>IP地址：   <input class="form-control"  style="width: 200px" type="text" id="create_ip" value=""></p>
+                <p>系统类型：   <input class="form-control"  style="width: 200px" type="text" id="create_os" value=""></p>
+                <p>运行状态：   <input class="form-control"  style="width: 200px" type="text" id="create_status" value=""></p>
+                <p>备注：  <input class="form-control"  style="width: 200px" type="text" id="create_remark" value=""></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                <button id="create_btn" type="button" class="btn btn-primary">提交更改</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div>
+<!-- /.modal -->
+<!-- 模态框（Modal） -->
+<div class="modal fade" id="edit_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                <h4 class="modal-title" id="myModalLabel">
+                    修改虚拟服务器
+                </h4>
+            </div>
+            <div class="modal-body">
+                <p>选择宿主机：
+                    <select class="form-control"  style="width: 200px" id="edit_server_id" >
+                    </select>
+                </p>
+                <p>ID： <input type="text" id="edit_id" value="" readonly="readonly"></p>
+                <p>主机名：<input class="form-control"  style="width: 200px" type="text" id="edit_name" value=""></p>
+                <p>CPU：   <input class="form-control"  style="width: 200px" type="text" id="edit_cpu" value=""></p>
+                <p>内存：   <input class="form-control"  style="width: 200px" type="text" id="edit_memory" value=""></p>
+                <p>磁盘：   <input class="form-control"  style="width: 200px" type="text" id="edit_disk" value=""></p>
+                <p>IP地址：   <input class="form-control"  style="width: 200px" type="text" id="edit_ip" value=""></p>
+                <p>系统类型：   <input class="form-control"  style="width: 200px" type="text" id="edit_os" value=""></p>
+                <p>运行状态：   <input class="form-control"  style="width: 200px" type="text" id="edit_status" value=""></p>
+                <p>备注：  <input class="form-control"  style="width: 200px" type="text" id="edit_remark" value=""></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                <button id="edit_btn" type="button" class="btn btn-primary">提交更改</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div>
+<!-- /.modal -->

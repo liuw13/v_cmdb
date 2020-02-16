@@ -1,0 +1,57 @@
+<!-- 模态框（Modal） -->
+<div class="modal fade" id="create_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                <h4 class="modal-title" id="myModalLabel">
+                    创建机柜
+                </h4>
+            </div>
+            <div class="modal-body">
+                <p>选择机房：
+                    <select class="form-control"  style="width: 200px" id="create_idc_id" >
+                    </select>
+                </p>
+                <p>机柜名：<input class="form-control"  style="width: 200px" type="text" id="create_name" value=""></p>
+                <p>编号：  <input class="form-control"  style="width: 200px" type="text" id="create_number" value=""></p>
+                <p>U型：   <input class="form-control"  style="width: 200px" type="text" id="create_size" value=""></p>
+                <p>备注：  <input class="form-control"  style="width: 200px" type="text" id="create_remark" value=""></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                <button id="create_btn" type="button" class="btn btn-primary">提交更改</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div>
+<!-- /.modal -->
+<!-- 模态框（Modal） -->
+<div class="modal fade" id="edit_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                <h4 class="modal-title" id="myModalLabel">
+                    修改机房
+                </h4>
+            </div>
+            <div class="modal-body">
+                <p>选择机房：
+                    <select class="form-control"  style="width: 200px" id="edit_idc_id" >
+                    </select>
+                </p>
+                <p>ID： <input type="text" id="edit_id" value="" readonly="readonly"></p>
+                <p>机柜名： <input type="text" id="edit_name" value=""></p>
+                <p>编号： <input type="text" id="edit_number" value=""></p>
+                <p>U型： <input type="text" id="edit_size" value=""></p>
+                <p>备注： <input type="text" id="edit_remark" value=""></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                <button id="edit_btn" type="button" class="btn btn-primary">提交更改</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div>
+<!-- /.modal -->

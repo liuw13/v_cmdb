@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+{% block content %}
+
+{% include 'cmdb/modal_idcs.html' %}
+
+<section class="content-header">
+        <div>
+             <ol class="breadcrumb">
+                 <li><a href="/cmdb/dashboard/"><i class="fa fa-dashboard"></i> Dashboard</a></li>
+                 <li class="active">数据中心</li>
+             </ol>
+        </div>
+</section>
+
+<div style="margin-bottom: 20px" class="col-md-12">
+    <p></p>
+    <div class="col-md-4">
+    <button id='btn-create' class="btn btn-primary">新增</button>
+    </div>
+
+    <div class="col-md-4">
+            <div class="input-group">
+                <input id="search" type="text" class="form-control" placeholder="机房名或地址">
+                <span class="input-group-btn">
+                    <button id="search_btn" class="btn btn-default" type="button">搜索</button>
+                </span>
+            </div>
+    </div>
+</div>
+
+    <div class="row">
+        <div class="col-md-6">
+        <table class="table table-striped">
+            <thead>
+                <td>ID</td>
+                <td>机房名</td>
+                <td>机房地址</td>
+                <td>备注</td>
+                <td>操作</td>
+            </thead>
+            <tbody>
+                {% for obj in paginator_data.object_list %}
+                    <tr>
+                        <td><a href="/cmdb/idcs/{{ obj.id }}">{{ obj.id }}</a> </td>
+                        <td>{{ obj.name }} </td>
+                        <td>{{ obj.address }} </td>
+                        <td>{{ obj.remark }} </td>
+                        <td>
+                            <button class="btn btn-danger btn_delete" obj-id="{{ obj.id }}" >删除</button>
+                            <button class="btn btn-default btn-put" obj-id="{{ obj.id }}">修改</button>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    </div>
+
+
+<div>
+    {%  if paginator_data.has_previous %}
+        <a class="paginator" href="?page={{ paginator_data.previous_page_number }}&search={{ search }}"><span>上一页</span></a>
+    {%  endif %}
+
+    {% for page in paginator_data.paginator.page_range %}
+        {% if paginator_data.number == page %}
+            <span id="current_page" >{{ page }}</span>
+        {% else %}
+            <a class="paginator" href="?page={{ page }}&search={{ search }}" title="{{ page }}"><span>{{ page }}</span></a>
+        {% endif %}
+    {% endfor %}
+    {% if paginator_data.has_next %}
+        <a class="paginator" href="?page={{ paginator_data.next_page_number }}&search={{ search }}"><span>下一页</span></a>
+    {% endif %}
+
+</div>
+
+<script>
+    //点击创建，弹出模态框
+    $('#btn-create').click(function () {
+        $('#create_modal').modal()
+    })
+    //点击模态框提交按钮，发送数据到后端
+    $('#create_btn').click(function () {
+        var name = $('#create_name').val()
+        var address = $('#create_address').val()
+        var remark = $('#create_remark').val()
+        var data = {name:name,address:address,remark:remark}
+        $.ajax({
+            type: 'POST',
+            url: '/cmdb/idcs/',
+            data: data,  // 前端传给后端的数据
+            dataType: "json",
+            success: function(result){
+                console.log(result)
+                location.reload()
+
+            },
+            error: function(){
+
+            },
+         })
+    })
+    //点击删除
+    $('.btn_delete').click(function () {
+        id = $(this).attr('obj-id')
+        data = {}
+        $.ajax({
+            type: 'DELETE',
+            url: '/cmdb/idcs/'+id,
+            data: data,  // 前端传给后端的数据
+            dataType: "json",
+            success: function(result){
+                console.log(result)
+                location.reload()
+
+            },
+            error: function(){
+
+            },
+         })
+    })
+
+    $('.btn-put').click(function () {
+        $('#edit_modal').modal()
+        id = $(this).attr('obj-id')
+        $.ajax({
+            type: 'GET',
+            url: '/cmdb/api_idcs/'+id,
+            data: {},  // 前端传给后端的数据
+            dataType: "json",
+            success: function(result){
+                console.log(result)
+                name = result.name
+                address = result.address
+                remark = result.remark
+                $('#edit_id').val(id)
+                $('#edit_name').val(name)
+                $('#edit_address').val(address)
+                $('#edit_remark').val(remark)
+            },
+            error: function(){
+            },
+         })
+    })
+
+    $('#edit_btn').click(function () {
+        var name = $('#edit_name').val()
+        var address = $('#edit_address').val()
+        var remark = $('#edit_remark').val()
+        id = $('#edit_id').val()
+        data = {name:name,address:address,remark:remark}
+        $.ajax({
+            type: 'PUT',
+            url: '/cmdb/idcs/'+id,
+            data: data,  // 前端传给后端的数据
+            dataType: "json",
+            success: function(result){
+                console.log(result)
+                location.reload()
+
+            },
+            error: function(){
+
+            },
+         })
+    })
+
+    $('#search_btn').click(function () {
+            var search = $('#search').val()
+            window.location.href = "/cmdb/idcs/?search=" + search
+    })
+</script>
+
+{% endblock %}
