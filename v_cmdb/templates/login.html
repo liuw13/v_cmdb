@@ -1,10 +1,11 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<meta name="description" content="此代码内容为超萌的猫头鹰登录界面" />
-<title>超萌的猫头鹰登录界面</title>
+<title>u2</title>
 <link rel="stylesheet" href="/static/css/jq22.css">
+<link rel="stylesheet" href="/static/css/bootstrap.min.css">
+<script src="/static/js/jquery.min.js"></script>
+<script src="/static/js/wintrue.js"></script>  <!-- flash 方法，使元素抖动 -->
 </head>
 <body>
 <!-- begin -->
@@ -20,31 +21,50 @@
                         <div class="arm arm-r"></div>
                     </div>
                 </div>
-                <div class="pad">
+                <div id="loginpad" class="pad">
                     <input type="hidden" name="_csrf" value="9IAtUxV2CatyxHiK2LxzOsT6wtBE6h8BpzOmk=">
+                    <!--
+                    <div style="margin-bottom: 20px">
+                        <label class="checkbox-inline">
+                            <input type="checkbox" id="ldapCheckbox" value="ldap"> LDAP登录
+                        </label>
+                    </div>
+                    -->
                     <div class="control-group">
                         <div class="controls">
-                            <label for="email" class="control-label fa fa-envelope"></label>
-                            <input id="username"  name="email" placeholder="用户名" tabindex="1" autofocus="autofocus" class="form-control input-medium">
+                            <label for="uname" class="control-label fa fa-user"></label>
+                            <input id="uname" type="email" name="email" placeholder="用户名" tabindex="1" autofocus="autofocus" class="form-control input-medium">
                         </div>
                     </div>
                     <div class="control-group">
                         <div class="controls">
                             <label for="password" class="control-label fa fa-asterisk"></label>
-                            <input id="password" type="password" name="password" placeholder="密码" tabindex="2" class="form-control input-medium">
+                            <input onkeydown=KeyDown() id="password" type="password" name="password" placeholder="密码" tabindex="2" class="form-control input-medium">
                         </div>
                     </div>
+			        <span id="loginrz" style="color:red"> </span>
                 </div>
-                <div class="form-actions"><a href="#" tabindex="5" class="btn pull-left btn-link text-muted">Forgot password?</a><a href="#" tabindex="6" class="btn btn-link text-muted">Sign Up</a>
-                    <button id='login-btn' type="submit" tabindex="4" class="btn btn-primary">Login</button>
+                <div class="form-actions">
+                    <button id="loginbtn" type="submit" tabindex="4" class="btn btn-info" style="margin-right:42%"><span class="glyphicon glyphicon-off"> </span> 登录</button>
                 </div>
-            </div>
+	    </div>
         </div>
     </div>
-    <script src="/static/js/jquery.min.js"></script>
-    <script>
-    $(function() {
+</div>
 
+    <script>
+
+    function KeyDown()  // 输入密码后，按回车键登陆
+        {
+  	  if (event.keyCode == 13)
+  	    {
+    		event.returnValue=false;
+    		event.cancel = true;
+    		$('#loginbtn').click();
+  		}
+	}
+
+    $(function() {
         $('#login #password').focus(function() {
             $('#owl-login').addClass('password');
         }).blur(function() {
@@ -52,30 +72,44 @@
         });
     });
 
-    $('#login-btn').click(function () {
-        username = $('#username').val()
-        password = $('#password').val()
-        data = {username:username,password:password}
+
+    $("#loginbtn").click(function(){
+	    var username = $("#uname").val()
+        var password = $("#password").val()
+        ldap = $("#ldapCheckbox").is(':checked')
+        if (ldap == true) {
+            var login_type = 'ldap'
+        } else {
+            login_type = ''
+        }
         $.ajax({
-                type: 'POST',
-                url: '/login/',
-                data: data,  // 前端传给后端的数据
-                dataType: "json",
-                success: function(result){
-                    console.log(result)
-                    status = result.data
-                    if (status == 1){
-                        window.location.href = '/'
-                    }else if (status == 0){
-                        alert('用户名或者密码错误')
-                    }
-                },
-                error: function(){
-                },
-             })
-    })
+             type: "POST",
+             url: "/login/",
+             data: {username:username, password:password, login_type:login_type},
+             dataType: "json",
+             success: function(result){
+                 status = result.status
+                 if (status == 0){
+                     location.href = "/"
+                 }
+                 else if (status == 1) {
+                     $('#loginrz').html('您的用户名或密码错误')
+                     flash('#loginpad',8,10,100)
+                 }
+                 else if (status == 2) {
+                     data = result.data
+                     $('#loginrz').html(data.desc + ', ' + data.info)
+                     flash('#loginpad',8,10,100)
+                 }
+             },
+	     error: function(){
+	     //显示错误信息
+	     },
+	})
+	})
+
+
     </script>
-</div>
-<!-- end -->
 </body>
 </html>
+

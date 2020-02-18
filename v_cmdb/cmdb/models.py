@@ -1,65 +1,66 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser
-from account.models import User
-# Create your models here.
+import json
+
 
 class BaseModel(models.Model):
-    name = models.CharField(max_length=32)
-    remark = models.TextField()
+    '''
+       基础表(抽象类)
+    '''
+    name = models.CharField(default='', null=True, blank=True, max_length=128, verbose_name='名字')
+    create_time = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    update_time = models.DateTimeField(auto_now=True, verbose_name='修改时间')
+    remark = models.TextField(default='', null=True, blank=True, verbose_name='备注')
+
+    @property
+    def to_dict_base(self):
+        ret = dict()
+        for attr in [f.name for f in self._meta.fields]:
+            value = getattr(self, attr)
+            ret[attr] = value
+        return ret
+
+    def __unicode__(self):
+        return self.name
+
     class Meta:
         abstract = True
+        ordering = ['-id']
+
 
 class Idc(BaseModel):
-    user = models.ManyToManyField(User)
-    address = models.CharField(max_length=96, blank=False, verbose_name='测试地址')
-    contact = models.CharField(max_length=11, blank=False, verbose_name='联系方式')
-
-    def change_name(self):
-        return '你查到的机房是: {} '.format(self.name)
-
-    def to_dict(self):
-        ret = {}
-        for i in self._meta.fields:
-            field_name = i.name
-            field_value = getattr(self, field_name)
-            if field_name == 'contact':
-                v = ''
-                if len(field_value) != 0:
-                    v = field_value[:3] + '****' + field_value[-4:]
-                field_value = v
-            ret[field_name] = field_value
-            racks = [{'id': rack.id, 'name': rack.name} for rack in self.rack_set.all()]
-            ret['racks'] = racks
-        return ret
+    address = models.CharField(max_length=256, verbose_name='地址')
 
     class Meta:
         ordering = ['-id']
-        verbose_name = '机房'
+        unique_together = ('name',)
+
+    @property
+    def to_dict(self):
+        ret = self.to_dict_base
+        objects = self.rack_set.all()
+        ret['racks'] = {'data': [obj for obj in objects.values()], 'count': objects.count()}
+        return ret
+
 
 class Rack(BaseModel):
     idc = models.ForeignKey(Idc, default='', null=True, blank=True, on_delete=models.SET_DEFAULT, verbose_name='所属机房')
     number = models.CharField(default='', max_length=64, null=True, blank=True, verbose_name='编号')
     size = models.CharField(default='', max_length=8, null=True, blank=True, verbose_name='U型')
 
-    def to_dict(self):
-        ret = {}
-        for i in self._meta.fields:
-            field_name = i.name
-            print(field_name)
-            field_value = getattr(self, field_name)
-            if field_name == 'idc':
-                if field_value:
-                    field_value = field_value.to_dict()
-                else:
-                    field_value = ''
-            ret[field_name] = field_value
-            #racks = [{'id': rack.id, 'name': rack.name} for rack in self.rack_set.all()]
-            #ret['racks'] = racks
-        return ret
-
     class Meta:
         ordering = ['-id']
-        verbose_name = '机柜'
+        unique_together = ('name', 'idc')
+
+    @property
+    def to_dict(self):
+        ret = self.to_dict_base
+        idc = getattr(self, 'idc')
+        idc_data = idc.to_dict if idc else {}
+        ret['idc'] = idc_data
+        objects = self.server_set.all()
+        ret['servers'] = {'data': [obj for obj in objects.values()], 'count': objects.count()}
+        return ret
+
 
 class Server(BaseModel):
     STATUS = (
@@ -67,7 +68,40 @@ class Server(BaseModel):
         (1, u'在线'),
     )
     rack = models.ForeignKey(Rack, default='', null=True, blank=True, on_delete=models.SET_DEFAULT, verbose_name='所属机柜')
+    uuid = models.CharField(default='', max_length=128, null=True, blank=True, verbose_name='UUID')
     sn = models.CharField(default='', max_length=128, null=True, blank=True, verbose_name='SN')
+    cpu = models.CharField(default='', max_length=64, null=True, blank=True, verbose_name='CPU')
+    memory = models.CharField(default='', max_length=64, null=True, blank=True, verbose_name='内存')
+    disk = models.CharField(default='', max_length=64, null=True, blank=True, verbose_name='磁盘大小')
+    ip = models.CharField(default='', max_length=64, null=True, blank=True, verbose_name='ip地址')
+    business = models.CharField(default='', max_length=64, null=True, blank=True, verbose_name='业务线')
+    server_type = models.CharField(default='', max_length=128, null=True, blank=True, verbose_name='服务器类型')
+    daq = models.TextField(default='', null=True, blank=True, verbose_name='数据采集')
+    status = models.IntegerField(default=1, choices=STATUS, verbose_name='运行状态')
+
+    class Meta:
+        ordering = ['-id']
+        unique_together = ('uuid', 'server_type')
+
+    @property
+    def to_dict(self):
+        ret = self.to_dict_base
+        rack = getattr(self, 'rack')
+        rack_data = rack.to_dict if rack else {}
+        ret['rack'] = rack_data
+        daq = eval(self.daq) if self.daq else ''
+        ret['daq'] = daq
+        ret['daq_json'] = json.dumps(daq)
+        objects = self.vm_set.all()
+        ret['vms'] = {'data': [obj for obj in objects.values()], 'count': objects.count()}
+        return ret
+
+class Vm(BaseModel):
+    STATUS = (
+        (0, u'下线'),
+        (1, u'在线'),
+    )
+    server = models.ForeignKey(Server, default='', null=True, blank=True, on_delete=models.SET_DEFAULT, verbose_name='所属服务器')
     uuid = models.CharField(default='', max_length=128, null=True, blank=True, verbose_name='UUID')
     cpu = models.CharField(default='', max_length=64, null=True, blank=True, verbose_name='CPU')
     memory = models.CharField(default='', max_length=64, null=True, blank=True, verbose_name='内存')
@@ -80,55 +114,15 @@ class Server(BaseModel):
 
     class Meta:
         ordering = ['-id']
-        verbose_name = '物理服务器'
+        unique_together = ('uuid', 'server_type')
 
+    @property
     def to_dict(self):
-        ret = {}
-        for i in self._meta.fields:
-            field_name = i.name
-            print(field_name)
-            field_value = getattr(self, field_name)
-            if field_name == 'rack':
-                if field_value:
-                    field_value = field_value.to_dict()
-                else:
-                    field_value = ''
-            ret[field_name] = field_value
-            #racks = [{'id': rack.id, 'name': rack.name} for rack in self.rack_set.all()]
-            #ret['racks'] = racks
-        return ret
-
-class Vm(BaseModel):
-    STATUS = (
-        (0, u'下线'),
-        (1, u'在线'),
-    )
-    server = models.ForeignKey(Server, default='', null=True, blank=True, on_delete=models.SET_DEFAULT, verbose_name='所属宿主机')
-    cpu = models.CharField(default='', max_length=64, null=True, blank=True, verbose_name='CPU')
-    memory = models.CharField(default='', max_length=64, null=True, blank=True, verbose_name='内存')
-    disk = models.CharField(default='', max_length=64, null=True, blank=True, verbose_name='磁盘大小')
-    ip = models.CharField(default='', max_length=64, null=True, blank=True, verbose_name='ip地址')
-    business = models.CharField(default='', max_length=64, null=True, blank=True, verbose_name='业务线')
-    OS_type = models.CharField(default='', max_length=128, null=True, blank=True, verbose_name='操作系统')
-    daq = models.TextField(default='', null=True, blank=True, verbose_name='数据采集')
-    status = models.IntegerField(default=1, choices=STATUS, verbose_name='运行状态')
-
-    class Meta:
-        ordering = ['-id']
-        verbose_name = '虚拟机'
-
-    def to_dict(self):
-        ret = {}
-        for i in self._meta.fields:
-            field_name = i.name
-            print(field_name)
-            field_value = getattr(self, field_name)
-            if field_name == 'server':
-                if field_value:
-                    field_value = field_value.to_dict()
-                else:
-                    field_value = ''
-            ret[field_name] = field_value
-            #racks = [{'id': rack.id, 'name': rack.name} for rack in self.rack_set.all()]
-            #ret['racks'] = racks
+        ret = self.to_dict_base
+        server = getattr(self, 'server')
+        server_data = server.to_dict if server else {}
+        ret['server'] = server_data
+        daq = eval(self.daq) if self.daq else ''
+        ret['daq'] = daq
+        ret['daq_json'] = json.dumps(daq)
         return ret

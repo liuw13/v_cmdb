@@ -14,13 +14,15 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path,re_path,include
+from django.urls import path, re_path, include
+from django.views.generic import RedirectView
 from .views import *
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('cmdb/', include('cmdb.urls')),
-    re_path(r'^$', index_page),
+    path('favicon.ico', RedirectView.as_view(url=r'static/images/favicon.ico')),
+    path('', IndexPage.as_view()),
     re_path(r'^login/$', LoginView.as_view()),
-    re_path(r'^logout/$', LogoutView.as_view())
+    re_path(r'logout/$', LogoutView.as_view()),
+    path('cmdb/', include('cmdb.urls'))
 ]

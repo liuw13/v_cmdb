@@ -1,288 +1,270 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% block content %}
-
 {% include 'cmdb/modal_servers.html' %}
 
-<section class="content-header">
-        <div>
-             <ol class="breadcrumb">
-                 <li><a href="/cmdb/dashboard/"><i class="fa fa-dashboard"></i> Dashboard</a></li>
-                 <li class="active">物理服务器</li>
-             </ol>
-        </div>
-</section>
-
-<div style="margin-bottom: 20px" class="col-md-12">
-    <p></p>
-    <div class="col-md-4">
-    <button id='btn-create' class="btn btn-primary">新增</button>
+    <div>
+         <ol class="breadcrumb">
+             <li><a href="/cmdb/dashboard/"><i class="fa fa-dashboard"></i> Home</a></li>
+             <li class="active">服务器</li>
+         </ol>
     </div>
 
-    <div class="col-md-4">
+    <div style="margin-bottom: 20px" class="col-md-12">
+        <p></p>
+        <div class="col-md-4">
+            <button id="add" class="btn btn-primary btn-sm"><span class="glyphicon glyphicon-plus"></span>新增</button>
+        </div>
+        <div class="col-md-4">
             <div class="input-group">
-                <input id="search" type="text" class="form-control" placeholder="服务器名或IP地址">
+                <input id="search" type="text" class="form-control" placeholder="主机名或IP或SN">
                 <span class="input-group-btn">
                     <button id="search_btn" class="btn btn-default" type="button">搜索</button>
                 </span>
             </div>
+        </div>
+        <p></p>
     </div>
-</div>
 
-    <div class="row">
-        <div class="col-md-6">
-        <table class="table table-striped">
+    <div>
+        <table id="idctable" class="table table-striped table-bordered table-hover dataTable no-footer">
             <thead>
-                <td>ID</td>
-                <td>主机名</td>
-                <td>所属机柜</td>
-                <td>CPU</td>
-                <td>内存</td>
-                <td>磁盘</td>
-                <td>IP地址</td>
-                <td>采集信息</td>
-                <td>运行状态</td>
-                <td>备注</td>
-                <td>操作</td>
+                  <tr>
+                      <th>ID</th>
+                      <th>主机名</th>
+                      <th>所属机柜</th>
+                      <th>SN</th>
+                      <th>CPU</th>
+                      <th>内存(M)</th>
+                      <th>磁盘(G)</th>
+                      <th>IP</th>
+                      <th>业务线</th>
+                      <th>状态</th>
+                      <th>备注</th>
+                      <th>采集信息</th>
+                      <th>操作</th>
+                  </tr>
             </thead>
-            <tbody>
-                {% for obj in paginator_data.object_list %}
-                    <tr>
-                        <td><a href="/cmdb/servers/{{ obj.id }}">{{ obj.id }}</a> </td>
-                        <td>{{ obj.name }} </td>
-                        <td>{{ obj.rack.name }} </td>
-                        <td>{{ obj.cpu }} </td>
-                        <td>{{ obj.memory }} </td>
-                        <td>{{ obj.disk }} </td>
-                        <td>{{ obj.ip }} </td>
-                        <td>{{ obj.daq }} </td>
-                        <td>{{ obj.status }} </td>
-                        <td>{{ obj.remark }} </td>
-                        <td>
-                            <button class="btn btn-danger btn_delete" obj-id="{{ obj.id }}" >删除</button>
-                            <button class="btn btn-default btn-put" obj-id="{{ obj.id }}">修改</button>
-                        </td>
-                    </tr>
-                {% endfor %}
+            <tbody id='table-content'>
+            {% for obj in paginator_data.object_list %}
+                <tr>
+                    <td><a href="/cmdb/servers/{{ obj.id }}">{{ obj.id }}</a></td>
+                    <td>{{ obj.name }}</td>
+                    <td>{{ obj.rack.name }}</td>
+                    <td>{{ obj.sn }}</td>
+                    <td>{{ obj.cpu }}</td>
+                    <td>{{ obj.memory }}</td>
+                    <td>{{ obj.disk }}</td>
+                    <td>{{ obj.ip }}</td>
+                    <td>{{ obj.business }}</td>
+                    <td>
+                        {% if obj.status == 0 %}
+                            <span class="label label-warning">下线</span>
+                        {% else %}
+                            <span class="label label-success">在线</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ obj.remark }}</td>
+                    <td><button class="btn btn-xs btn-info show" daq="{{ obj.daq_json }}">信息</button></td>
+                    <td>
+                        <button class="btn btn-xs btn-warning edit">编辑</button>
+                        <button class="btn btn-xs btn-danger delete">删除</button>
+                    </td>
+                </tr>
+            {% endfor %}
             </tbody>
         </table>
     </div>
+
+    <div class="yahoo2" style="margin-left:1%">
+        {% if paginator_data.has_previous %}
+            <a class='paginator' href='?page={{ paginator_data.previous_page_number }}&search={{search}}'><span>上一页</span></a>
+        {% endif %}
+
+        {% for page in paginator_data.paginator.page_range %}
+            {% if paginator_data.number == page %}
+                <span id="currentpage">{{ page }}</span>
+            {% else %}
+                <a class='paginator' href='?page={{ page }}&search={{search}}' title='{{ page }}'><span>{{ page }}</span></a>
+            {% endif %}
+        {% endfor %}
+
+        {% if paginator_data.has_next %}
+            <a class='paginator' href='?page={{ paginator_data.next_page_number }}&search={{search}}'><span>下一页</span></a>
+        {% endif %}
     </div>
 
+    <script>
 
-<div>
-    {%  if paginator_data.has_previous %}
-        <a class="paginator" href="?page={{ paginator_data.previous_page_number }}&search={{ search }}"><span>上一页</span></a>
-    {%  endif %}
+        $(document).ready(function() {
+            $.ajax({
+                type: 'get',
+                url: '/cmdb/api_racks/',
+                data: '',
+                dataType: 'json',
+                success: function(result){
+                    data = result.data
+                    options = ''
+                    for (i=0; i<data.length; i++) {
+                        item = data[i]
+                        option = '<option id="' + item.id +'">' + item.name + '</option>'
+                        options += option
+                    }
+                    $('#create_rack_id').append(options)
+                    $('#create_modal').attr('select_options', options)
+                },
+            })
+        });
 
-    {% for page in paginator_data.paginator.page_range %}
-        {% if paginator_data.number == page %}
-            <span id="current_page" >{{ page }}</span>
-        {% else %}
-            <a class="paginator" href="?page={{ page }}&search={{ search }}" title="{{ page }}"><span>{{ page }}</span></a>
-        {% endif %}
-    {% endfor %}
-    {% if paginator_data.has_next %}
-        <a class="paginator" href="?page={{ paginator_data.next_page_number }}&search={{ search }}"><span>下一页</span></a>
-    {% endif %}
+        /*
+        $('#create_idc_id').change(function () {
+            id = $('#create_idc_id option:selected').attr('id')  // 获取选中option的属性(id)
+            console.log(v)
+        });
+        */
 
-</div>
+        // 点击添加按钮
+        $('#add').click(function(){
+            $('#create_modal').modal()
+        });
 
-<script>
-    //给create_idc_id,edit_idc_id赋option
-    $.ajax({
-            type: 'GET',
-            url: '/cmdb/api_idcs/',
-            data: {},
-            dataType: "json",
-            success: function(result){
-                data = result.data
-                option='<option> </option>'
-                $('#create_idc_id').append(option)
-                for (idc of data){
-                    option = '<option id=' + idc.id + '>' + idc.name + '</option>'
-                    $('#create_idc_id').append(option)
-                    $('#edit_idc_id').append(option)
-                }
-            },
-            error: function(){
-            },
-         })
-    //点击创建，弹出模态框
-    $('#btn-create').click(function () {
-        $('#create_modal').modal()
-    })
-    //点击模态框提交按钮，发送数据到后端
-    $('#create_btn').click(function () {
-        name = $('#create_name').val()
-        rack_id=$('#create_rack_id option:selected').attr('id')
-        sn = $('#create_sn').val()
-        cpu = $('#create_cpu').val()
-        memory = $('#create_memory').val()
-        disk = $('#create_disk').val()
-        ip = $('#create_ip').val()
-        server_type = $('#create_server_type').val()
-        status = $('#create_status').val()
-        remark = $('#create_remark').val()
-        data = {rack_id:rack_id,name:name,sn:sn,cpu:cpu,memory:memory,disk:disk,ip:ip,server_type:server_type,status:status,remark:remark}
-        console.log(data)
-        $.ajax({
-            type: 'POST',
-            url: '/cmdb/servers/',
-            data: data,  // 前端传给后端的数据
-            dataType: "json",
-            success: function(result){
-                console.log(result)
-                location.reload()
+        // 发起添加请求
+        $('#create_btn').click(function () {
+            var rack_id = $('#create_rack_id option:selected').attr('id')
+            var name = $('#create_name').val();
+            var sn = $('#create_sn').val();
+            var cpu = $('#create_cpu').val();
+            var memory = $('#create_memory').val();
+            var disk = $('#create_disk').val();
+            var ip = $('#create_ip').val();
+            var uuid = $('#create_uuid').val();
+            var business = $('#create_business').val();
+            var status = $('#create_status option:selected').attr('status_id');
+            var remark = $('#create_remark').val();
+            var data = {name:name, rack_id:rack_id, cpu:cpu, memory:memory, disk:disk, ip:ip, uuid:uuid,sn:sn, business:business, status:status, remark:remark}
+            $.ajax({
+                type: 'post',
+                url: '/cmdb/servers/',
+                data: data,
+                dataType: 'json',
+                success: function(result){
+                    status = result.status
+                    data = result.data
+                    if (status == 1) {
+                        location.reload()
+                    } else {
+                        alert(data)
+                    }
+                },
+            })
+        });
 
-            },
-            error: function(){
+        // 点击修改按钮
+        $('.edit').click(function () {
+            $('#edit_modal').modal();
+            //console.log(document.getElementById("create_idc_id").options);
+            var id = $.trim($(this).parents("tr").children("td").eq(0).text());
+            var name = $.trim($(this).parents("tr").children("td").eq(1).text());
+            var rack_name = $.trim($(this).parents("tr").children("td").eq(2).text());
+            var sn = $.trim($(this).parents("tr").children("td").eq(3).text());
+            var cpu = $.trim($(this).parents("tr").children("td").eq(4).text());
+            var memory = $.trim($(this).parents("tr").children("td").eq(5).text());
+            var disk = $.trim($(this).parents("tr").children("td").eq(6).text());
+            var ip = $.trim($(this).parents("tr").children("td").eq(7).text());
+            var business = $.trim($(this).parents("tr").children("td").eq(8).text());
+            var status = $.trim($(this).parents("tr").children("td").eq(9).text());
+            var remark = $.trim($(this).parents("tr").children("td").eq(10).text());
+            $('#edit_id').attr('value', id)
+            $('#edit_name').attr('value', name);
+            $('#edit_sn').attr('value', sn);
+            $('#edit_cpu').attr('value', cpu);
+            $('#edit_memory').attr('value', memory);
+            $('#edit_disk').attr('value', disk);
+            $('#edit_ip').attr('value', ip);
+            $('#edit_business').attr('value', business);
+            //$('#edit_status').attr('value', status);
+            $('#edit_remark').attr('value', remark);
+            rack_options = $('#create_modal').attr('select_options');
+            $('#edit_rack_id').empty();
+            $('#edit_rack_id').append(rack_options);
+            $('#edit_rack_id').attr('value', rack_name);
+            $('#edit_status').attr('value', status)
+        });
 
-            },
-         })
-    })
-    //创建下拉动作
-    $('#create_idc_id').change(function () {
-        //idc_name=$(this).val()
-        idc_id=$('#create_idc_id option:selected').attr('id')
-        $.ajax({
-            type: 'GET',
-            url: '/cmdb/api_idcs/'+ idc_id,
-            data: {},
-            dataType: "json",
-            success: function(result){
-                $('#create_rack_id').empty()
-                racks = result.racks
-                for (rack of racks){
-                    option = '<option id=' + rack.id + '>' + rack.name + '</option>'
-                    $('#create_rack_id').append(option)
-                }
-            },
-            error: function(){
+        // 发起修改请求
+        $('#edit_btn').click(function () {
+            var id = $('#edit_id').val();
+            var name = $('#edit_name').val();
+            var rack_id = $('#edit_rack_id option:selected').attr('id');
+            var sn = $('#edit_sn').val();
+            var cpu = $('#edit_cpu').val();
+            var memory = $('#edit_memory').val();
+            var disk = $('#edit_disk').val();
+            var ip = $('#edit_ip').val();
+            var business = $('#edit_business').val();
+            var status = $('#edit_status option:selected').attr('status_id')
+            var remark = $('#edit_remark').val();
+            var data = {
+                name:name,
+                rack_id:rack_id,
+                sn:sn,
+                cpu:cpu,
+                memory:memory,
+                disk:disk,
+                ip:ip,
+                business:business,
+                status:status,
+                remark:remark
+            }
+            $.ajax({
+                type: 'put',
+                url: '/cmdb/servers/' + id + '/',
+                data: data,
+                dataType: 'json',
+                success: function(result){
+                    status = result.status
+                    data = result.data
+                    if (status == 1) {
+                        location.reload()
+                    } else {
+                        alert(data)
+                    }
+                },
+            })
+        });
 
-            },
-         })
-    })
+        // 点击删除按钮，发起删除IDC请求
+        $('.delete').click(function () {
+            var id = $.trim($(this).parents("tr").children("td").eq(0).text());
+            $.ajax({
+                type: 'delete',
+                url: '/cmdb/servers/' + id + '/',
+                data: '',
+                dataType: 'json',
+                success: function(result){
+                    location.reload()
+                },
+            })
+        });
 
-    //点击修改，弹出模态框，并发送IDC和对应rack数据,并且列出该IDC所有rack,还有server数据到前端
-    $('.btn-put').click(function () {
-        $('#edit_modal').modal()
-        id = $(this).attr('obj-id')
-        $.ajax({
-            type: 'GET',
-            url: '/cmdb/api_servers/'+id,
-            data: {},  // 前端传给后端的数据
-            dataType: "json",
-            success: function(result){
-                console.log(result)
-                $('#edit_rack_id').empty()
-                idc_name = result.rack.idc.name
-                racks = result.rack.idc.racks
-                for (rack of racks) {
-                    option = '<option id=' + rack.id + '>' + rack.name + '</option>'
-                    $('#edit_rack_id').append(option)
-                }
-                rack_name = result.rack.name
-                name = result.name
-                sn = result.sn
-                cpu = result.cpu
-                memory = result.memory
-                disk = result.disk
-                ip = result.ip
-                status = result.status
-                remark = result.remark
-                $('#edit_idc_id').attr('value',idc_name)
-                $('#edit_rack_id').attr('value',rack_name)
-                $('#edit_id').val(id)
-                $('#edit_name').val(name)
-                $('#edit_sn').val(sn)
-                $('#edit_cpu').val(cpu)
-                $('#edit_memory').val(memory)
-                $('#edit_disk').val(disk)
-                $('#edit_ip').val(ip)
-                $('#edit_status').val(status)
-                $('#edit_remark').val(remark)
-            },
-            error: function(){
-            },
-         })
-    })
-    //点击模态框提交按钮，发送数据到后端
-    $('#edit_btn').click(function () {
-        name = $('#edit_name').val()
-        sn = $('#edit_sn').val()
-        cpu = $('#edit_cpu').val()
-        memory = $('#edit_memory').val()
-        disk = $('#edit_disk').val()
-        ip = $('#edit_ip').val()
-        status = $('#edit_status').val()
-        remark = $('#edit_remark').val()
-        id = $('#edit_id').val()
-        rack_id = $('#edit_rack_id option:selected').attr('id')
-        data = {rack_id:rack_id,name:name,sn:sn,cpu:cpu,memory:memory,disk:disk,ip:ip,status:status,remark:remark}
+        $('.show').click(function () {
+            var daq = $(this).attr('daq');
+            daq = JSON.parse(daq);
+            html = ''
+            for (i in daq) {
+                html += '<div>' + '<b>' + i + '</b>' + ': ' + daq[i] + '</div>'
+            }
+            $('#daq_modal').modal();
+            $('#daq_content').html(html)
+            var id = $.trim($(this).parents("tr").children("td").eq(0).text());
+            $('#server_id').html('(ID: '+id+')')
+        })
 
-        $.ajax({
-            type: 'PUT',
-            url: '/cmdb/servers/'+id,
-            data: data,  // 前端传给后端的数据
-            dataType: "json",
-            success: function(result){
-                console.log(result)
-                location.reload()
-
-            },
-            error: function(){
-
-            },
-         })
-    })
-    //修改下拉动作
-    $('#edit_idc_id').change(function () {
-        //idc_name=$(this).val()
-        idc_id=$('#edit_idc_id option:selected').attr('id')
-        $.ajax({
-            type: 'GET',
-            url: '/cmdb/api_idcs/'+ idc_id,
-            data: {},
-            dataType: "json",
-            success: function(result){
-                $('#edit_rack_id').empty()
-                racks = result.racks
-                for (rack of racks){
-                    option = '<option id=' + rack.id + '>' + rack.name + '</option>'
-                    $('#edit_rack_id').append(option)
-                }
-            },
-            error: function(){
-
-            },
-         })
-    })
-
-    //点击删除
-    $('.btn_delete').click(function () {
-        id = $(this).attr('obj-id')
-        data = {}
-        $.ajax({
-            type: 'DELETE',
-            url: '/cmdb/servers/'+id,
-            data: data,  // 前端传给后端的数据
-            dataType: "json",
-            success: function(result){
-                console.log(result)
-                location.reload()
-
-            },
-            error: function(){
-
-            },
-         })
-    })
-
-    $('#search_btn').click(function () {
+        // 点击搜索按钮
+        $('#search_btn').click(function () {
             var search = $('#search').val()
             window.location.href = "/cmdb/servers/?search=" + search
-    })
+        })
 
-</script>
+    </script>
 
 {% endblock %}

@@ -137,3 +137,9 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'static'),
 )
+
+# LDAP
+#LDAP = {
+#    'host': "127.0.0.1",  # LDAP服务器地址
+#    'port': 389  # LDAP端口
+#}
